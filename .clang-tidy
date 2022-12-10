@@ -5,7 +5,9 @@ Checks:    'clang-diagnostic-*,clang-analyzer-*,cppcoreguidelines-*,modernize-*,
             hicpp-multiway-paths-covered, hicpp-avoid-goto, misc-*, -cppcoreguidelines-avoid-magic-numbers,
             readability-*, -readability-identifier-naming, -readability-implicit-bool-conversion,
             -readability-magic-numbers, -bugprone-easily-swappable-parameters, -cppcoreguidelines-pro-type-reinterpret-cast,
-            -cppcoreguidelines-pro-bounds-constant-array-index, -cppcoreguidelines-pro-bounds-pointer-arithmetic'
+            -cppcoreguidelines-pro-bounds-constant-array-index, -cppcoreguidelines-pro-bounds-pointer-arithmetic,
+            -misc-non-private-member-variables-in-classes, -cppcoreguidelines-non-private-member-variables-in-classes'
+
 WarningsAsErrors: true
 HeaderFilterRegex: ''
 AnalyzeTemporaryDtors: true

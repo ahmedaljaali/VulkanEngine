@@ -7,7 +7,7 @@ AllowShortIfStatementsOnASingleLine: WithoutElse
 BreakBeforeBinaryOperators: None
 BreakBeforeBraces: Allman
 BreakConstructorInitializers: BeforeColon
-ColumnLimit: 110
+ColumnLimit: 120
 ConstructorInitializerAllOnOneLineOrOnePerLine: true
 ContinuationIndentWidth: 6
 Cpp11BracedListStyle: true

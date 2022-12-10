@@ -2,3 +2,5 @@ compile_commands.json
 Build/
 .cache/
 bin/
+*.spv
+extern

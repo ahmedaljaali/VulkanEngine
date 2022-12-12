@@ -30,13 +30,14 @@ namespace VE
         ~PipelineConfigInfo(void) = default;
 
         VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo{};
-        VkViewport viewport{};
-        VkRect2D scissor{};
+        VkPipelineViewportStateCreateInfo viewportInfo{};
         VkPipelineRasterizationStateCreateInfo rasterizationInfo{};
         VkPipelineMultisampleStateCreateInfo multisampleInfo{};
         VkPipelineColorBlendAttachmentState colorBlendAttachment{};
         VkPipelineColorBlendStateCreateInfo colorBlendInfo{};
         VkPipelineDepthStencilStateCreateInfo depthStencilInfo{};
+        std::vector<VkDynamicState> dynamicStateEnables{};
+        VkPipelineDynamicStateCreateInfo dynamicStateInfo{};
 
         // You have to set them manually
         VkPipelineLayout pipelineLayout{VK_NULL_HANDLE};
@@ -80,7 +81,7 @@ namespace VE
         // Destructor
         ~Pipeline(void);
 
-        static PipelineConfigInfo defaultPipelineConfig(std::uint32_t width, std::uint32_t height);
+        static void defaultPipelineConfig(PipelineConfigInfo& configInfo);
 
         void bind(VkCommandBuffer commandBuffer);
     };

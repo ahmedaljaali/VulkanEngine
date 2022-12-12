@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Device.h"
+#include "Model.h"
 #include "Pipeline.h"
 #include "SwapChain.h"
 #include "Window.h"
@@ -21,20 +22,25 @@ namespace VE
     private:  // Private variables
         Window m_window;
         Device m_device;
-        SwapChain m_swapChain;
+        std::unique_ptr<SwapChain> m_swapChain;
         std::unique_ptr<Pipeline> m_pipeline;
         VkPipelineLayout m_pipelineLayout;
         std::vector<VkCommandBuffer> m_commandBuffers;
+        std::unique_ptr<Model> m_model;
 
     public:  // Public variables
         static constexpr std::uint32_t WIDTH{800};
         static constexpr std::uint32_t HEIGHT{600};
 
     private:  // Private methods
+        void loadModels(void);
         void createPipelineLayout(void);
         void createPipeline(void);
         void createCommandBuffers(void);
+        void freeCommandBuffers(void);
+        void recordCommandBuffer(std::uint32_t imageIndex);
         void drawFrame(void);
+        void recreateSwapChain(void);
 
     public:  // Public methods
         /*------------------------------------------------------------------*/

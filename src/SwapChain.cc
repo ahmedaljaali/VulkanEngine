@@ -9,18 +9,40 @@
 #include <limits>
 #include <set>
 #include <stdexcept>
+#include <utility>
 
 namespace VE
 {
 
-    SwapChain::SwapChain(Device& device, VkExtent2D extent)
+    SwapChain::SwapChain(Device& device, VkExtent2D windowExtent)
         : m_swapChainImageFormat{},
           m_swapChainExtent{},
           m_renderPass{},
           m_device{device},
-          m_windowExtent{extent},
+          m_windowExtent{windowExtent},
           m_swapChain{},
           m_currentFrame{}
+    {
+        init();
+    }
+
+    SwapChain::SwapChain(Device& device, VkExtent2D windowExtent, std::shared_ptr<SwapChain> previousSwapChain)
+        : m_swapChainImageFormat{},
+          m_swapChainExtent{},
+          m_renderPass{},
+          m_device{device},
+          m_windowExtent{windowExtent},
+          m_swapChain{},
+          m_oldSwapChain{std::move(previousSwapChain)},
+          m_currentFrame{}
+    {
+        init();
+
+        // clean up the old swap chain
+        m_oldSwapChain = nullptr;
+    }
+
+    void SwapChain::init(void)
     {
         createSwapChain();
         createImageViews();
@@ -141,6 +163,7 @@ namespace VE
         VkExtent2D extent{chooseSwapExtent(swapChainSupport.capabilities)};
 
         std::uint32_t imageCount{swapChainSupport.capabilities.minImageCount + 1};
+
         // Checking if we don't have limits
         if(swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount)
         {
@@ -180,7 +203,7 @@ namespace VE
         createInfo.presentMode = presentMode;
         createInfo.clipped = VK_TRUE;
 
-        createInfo.oldSwapchain = VK_NULL_HANDLE;
+        createInfo.oldSwapchain = (m_oldSwapChain == nullptr) ? VK_NULL_HANDLE : m_oldSwapChain->m_swapChain;
 
         if(vkCreateSwapchainKHR(m_device.device(), &createInfo, nullptr, &m_swapChain) != VK_SUCCESS)
         {

@@ -17,11 +17,13 @@ namespace VE
         std::int32_t m_width;
         std::int32_t m_height;
         std::string m_name;
+        bool m_framebufferResized;
 
     public:  // Public variables
 
     private:  // Private methods
         void init(void);
+        static void framebufferResizedCallback(GLFWwindow* window, std::int32_t width, std::int32_t height);
 
     public:  // Public methods
         /*------------------------------------------------------------------*/
@@ -44,5 +46,7 @@ namespace VE
         void createWindowSurface(VkInstance instance, VkSurfaceKHR* surface);
         static std::vector<const char*> getInstanceExtensions(void);
         VkExtent2D getExtent(void);
+        [[nodiscard]] bool wasWindowResized(void) const;
+        void resetWindowResizedFlag(void);
     };
 }

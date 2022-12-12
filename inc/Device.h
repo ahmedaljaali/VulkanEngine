@@ -63,14 +63,14 @@ namespace VE
         /*------------------------------------------------------------------*/
         /*                         Helper Functions                         */
 
-        bool isDeviceSuitable(VkPhysicalDevice device);
+        bool isDeviceSuitable(VkPhysicalDevice phyDevice);
         [[nodiscard]] std::vector<const char*> getRequiredExtensions() const;
         bool checkValidationLayerSupport();
-        QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
+        QueueFamilyIndices findQueueFamilies(VkPhysicalDevice phyDevice);
         void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
         void hasGflwRequiredInstanceExtensions();
-        bool checkDeviceExtensionSupport(VkPhysicalDevice device);
-        SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
+        bool checkDeviceExtensionSupport(VkPhysicalDevice phyDevice);
+        SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice phyDevice);
         /*------------------------------------------------------------------*/
 
     public:  // Public methods

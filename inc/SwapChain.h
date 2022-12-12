@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include <memory>
 
 namespace VE
 {
@@ -31,6 +32,7 @@ namespace VE
         VkExtent2D m_windowExtent;
 
         VkSwapchainKHR m_swapChain;
+        std::shared_ptr<SwapChain> m_oldSwapChain;
 
         std::vector<VkSemaphore> m_imageAvailableSemaphores;
         std::vector<VkSemaphore> m_renderFinishedSemaphores;
@@ -42,6 +44,7 @@ namespace VE
         static constexpr int MAX_FRAMES_IN_FLIGHT{2};
 
     private:  // Private methods
+        void init(void);
         void createSwapChain(void);
         void createImageViews(void);
         void createDepthResources(void);
@@ -69,6 +72,9 @@ namespace VE
 
         // Constructor
         SwapChain(Device& device, VkExtent2D windowExtent);
+
+        // Constructor
+        SwapChain(Device& device, VkExtent2D windowExtent, std::shared_ptr<SwapChain> previousSwapChain);
 
         // Destructor
         ~SwapChain(void);

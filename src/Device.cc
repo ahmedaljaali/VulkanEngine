@@ -236,21 +236,21 @@ namespace VE
 
     void Device::createSurface(void) { m_window.createWindowSurface(m_instance, &m_surface); }
 
-    bool Device::isDeviceSuitable(VkPhysicalDevice device)
+    bool Device::isDeviceSuitable(VkPhysicalDevice phyDevice)
     {
-        QueueFamilyIndices indices{findQueueFamilies(device)};
+        QueueFamilyIndices indices{findQueueFamilies(phyDevice)};
 
-        bool extensionsSupported{checkDeviceExtensionSupport(device)};
+        bool extensionsSupported{checkDeviceExtensionSupport(phyDevice)};
 
         bool swapChainAdequate{};
         if(extensionsSupported)
         {
-            SwapChainSupportDetails swapChainSupport{querySwapChainSupport(device)};
+            SwapChainSupportDetails swapChainSupport{querySwapChainSupport(phyDevice)};
             swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
         }
 
         VkPhysicalDeviceFeatures supportedFeatures;
-        vkGetPhysicalDeviceFeatures(device, &supportedFeatures);
+        vkGetPhysicalDeviceFeatures(phyDevice, &supportedFeatures);
 
         return indices.isComplete() && extensionsSupported && swapChainAdequate && supportedFeatures.samplerAnisotropy;
     }
@@ -350,13 +350,13 @@ namespace VE
         }
     }
 
-    bool Device::checkDeviceExtensionSupport(VkPhysicalDevice device)
+    bool Device::checkDeviceExtensionSupport(VkPhysicalDevice phyDevice)
     {
         std::uint32_t extensionCount{};
-        vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
+        vkEnumerateDeviceExtensionProperties(phyDevice, nullptr, &extensionCount, nullptr);
 
         std::vector<VkExtensionProperties> availableExtensions(extensionCount);
-        vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data());
+        vkEnumerateDeviceExtensionProperties(phyDevice, nullptr, &extensionCount, availableExtensions.data());
 
         std::set<std::string> requiredExtensions(m_deviceExtensions.begin(), m_deviceExtensions.end());
 
@@ -368,15 +368,15 @@ namespace VE
         return requiredExtensions.empty();
     }
 
-    QueueFamilyIndices Device::findQueueFamilies(VkPhysicalDevice device)
+    QueueFamilyIndices Device::findQueueFamilies(VkPhysicalDevice phyDevice)
     {
         QueueFamilyIndices indices;
 
         std::uint32_t queueFamilyCount{};
-        vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
+        vkGetPhysicalDeviceQueueFamilyProperties(phyDevice, &queueFamilyCount, nullptr);
 
         std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
-        vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
+        vkGetPhysicalDeviceQueueFamilyProperties(phyDevice, &queueFamilyCount, queueFamilies.data());
 
         for(std::uint32_t familyIndex{}; const auto& queueFamily : queueFamilies)
         {
@@ -386,7 +386,7 @@ namespace VE
             }
 
             VkBool32 presentSupport{};
-            vkGetPhysicalDeviceSurfaceSupportKHR(device, familyIndex, m_surface, &presentSupport);
+            vkGetPhysicalDeviceSurfaceSupportKHR(phyDevice, familyIndex, m_surface, &presentSupport);
             if(queueFamily.queueCount > 0 && presentSupport)
             {
                 indices.presentFamily = familyIndex;
@@ -403,28 +403,28 @@ namespace VE
         return indices;
     }
 
-    SwapChainSupportDetails Device::querySwapChainSupport(VkPhysicalDevice device)
+    SwapChainSupportDetails Device::querySwapChainSupport(VkPhysicalDevice phyDevice)
     {
         SwapChainSupportDetails details;
-        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, m_surface, &details.capabilities);
+        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(phyDevice, m_surface, &details.capabilities);
 
         std::uint32_t formatCount{};
-        vkGetPhysicalDeviceSurfaceFormatsKHR(device, m_surface, &formatCount, nullptr);
+        vkGetPhysicalDeviceSurfaceFormatsKHR(phyDevice, m_surface, &formatCount, nullptr);
 
         if(formatCount)
         {
             details.formats.resize(formatCount);
-            vkGetPhysicalDeviceSurfaceFormatsKHR(device, m_surface, &formatCount, details.formats.data());
+            vkGetPhysicalDeviceSurfaceFormatsKHR(phyDevice, m_surface, &formatCount, details.formats.data());
         }
 
         std::uint32_t presentModeCount{};
-        vkGetPhysicalDeviceSurfacePresentModesKHR(device, m_surface, &presentModeCount, nullptr);
+        vkGetPhysicalDeviceSurfacePresentModesKHR(phyDevice, m_surface, &presentModeCount, nullptr);
 
         if(presentModeCount)
         {
             details.presentModes.resize(presentModeCount);
             vkGetPhysicalDeviceSurfacePresentModesKHR(
-                  device, m_surface, &presentModeCount, details.presentModes.data());
+                  phyDevice, m_surface, &presentModeCount, details.presentModes.data());
         }
         return details;
     }

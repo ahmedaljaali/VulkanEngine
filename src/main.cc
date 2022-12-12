@@ -3,7 +3,7 @@
 // std
 #include <cstdlib>
 #include <iostream>
-#include <stdexcept>
+#include <exception>
 
 int main(void)
 {

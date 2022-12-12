@@ -7,7 +7,7 @@ namespace VE
 {
     // Constructor
     Window::Window(std::int32_t width, std::int32_t height, const std::string& name)
-        : m_window{}, m_width{width}, m_height{height}, m_name{name}
+        : m_window{}, m_width{width}, m_height{height}, m_name{name}, m_framebufferResized{}
     {
         init();
     }
@@ -24,13 +24,26 @@ namespace VE
         glfwInit();
 
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-        glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+        glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
         m_window = glfwCreateWindow(m_width, m_height, m_name.c_str(), nullptr, nullptr);
         if(!m_window)
         {
             throw std::runtime_error{"Failed to create GLFW window!"};
         }
+
+        // Associate this window with our class
+        glfwSetWindowUserPointer(m_window, this);
+        glfwSetFramebufferSizeCallback(m_window, Window::framebufferResizedCallback);
+    }
+
+    void Window::framebufferResizedCallback(GLFWwindow* window, std::int32_t width, std::int32_t height)
+    {
+        auto* veWindow{reinterpret_cast<Window*>(glfwGetWindowUserPointer(window))};
+
+        veWindow->m_framebufferResized = true;
+        veWindow->m_width = width;
+        veWindow->m_height = height;
     }
 
     bool Window::shouldClose(void) { return glfwWindowShouldClose(m_window); }
@@ -63,4 +76,8 @@ namespace VE
 
         return {static_cast<std::uint32_t>(width), static_cast<std::uint32_t>(height)};
     }
+
+    bool Window::wasWindowResized(void) const { return m_framebufferResized; }
+
+    void Window::resetWindowResizedFlag(void) { m_framebufferResized = false; }
 }

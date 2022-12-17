@@ -15,7 +15,6 @@ namespace VE
     public:  // Public variables
 
     private:  // Private methods
-        void start(void);
 
     public:  // Public methods
         /*------------------------------------------------------------------*/

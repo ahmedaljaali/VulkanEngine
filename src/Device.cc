@@ -451,19 +451,19 @@ namespace VE
     {
         VkPhysicalDeviceMemoryProperties memProperties;
         vkGetPhysicalDeviceMemoryProperties(m_physicalDevice, &memProperties);
-        for(std::uint32_t propertyIndex{}; propertyIndex < memProperties.memoryTypeCount; ++propertyIndex)
+        for(std::uint32_t memoryTypeIndex{}; memoryTypeIndex < memProperties.memoryTypeCount; ++memoryTypeIndex)
         {
-            if((typeFilter & (1 << propertyIndex)) &&
-               (memProperties.memoryTypes[propertyIndex].propertyFlags & properties) == properties)
+            if((typeFilter & (1 << memoryTypeIndex)) &&
+               (memProperties.memoryTypes[memoryTypeIndex].propertyFlags & properties) == properties)
             {
-                return propertyIndex;
+                return memoryTypeIndex;
             }
         }
 
         throw std::runtime_error{"Failed to find suitable memory type!"};
     }
 
-    void Device::createBuffer(VkDeviceSize size,
+    void Device::createBuffer(std::size_t size,
                               VkBufferUsageFlags usage,
                               VkMemoryPropertyFlags properties,
                               VkBuffer& buffer,

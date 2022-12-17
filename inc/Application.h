@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Device.h"
+#include "GameObject.h"
 #include "Model.h"
 #include "Pipeline.h"
 #include "SwapChain.h"
@@ -26,14 +27,14 @@ namespace VE
         std::unique_ptr<Pipeline> m_pipeline;
         VkPipelineLayout m_pipelineLayout;
         std::vector<VkCommandBuffer> m_commandBuffers;
-        std::unique_ptr<Model> m_model;
+        std::vector<GameObject> m_gameObjects;
 
     public:  // Public variables
         static constexpr std::uint32_t WIDTH{800};
         static constexpr std::uint32_t HEIGHT{600};
 
     private:  // Private methods
-        void loadModels(void);
+        void loadGameObjects(void);
         void createPipelineLayout(void);
         void createPipeline(void);
         void createCommandBuffers(void);
@@ -41,6 +42,7 @@ namespace VE
         void recordCommandBuffer(std::uint32_t imageIndex);
         void drawFrame(void);
         void recreateSwapChain(void);
+        void renderGameObjects(VkCommandBuffer commandBuffer);
 
     public:  // Public methods
         /*------------------------------------------------------------------*/

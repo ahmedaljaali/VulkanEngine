@@ -115,7 +115,7 @@ namespace VE
         /*                     Buffer Helper Functions                      */
 
         // Buffer Helper Functions
-        void createBuffer(VkDeviceSize size,
+        void createBuffer(std::size_t size,
                           VkBufferUsageFlags usage,
                           VkMemoryPropertyFlags properties,
                           VkBuffer& buffer,

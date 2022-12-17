@@ -42,7 +42,7 @@ namespace VE
             throw std::runtime_error{"At least we should have three vertices!"};
         }
 
-        VkDeviceSize bufferSize{sizeof(vertices[0]) * m_vertexCount};
+        std::size_t bufferSize{sizeof(vertices[0]) * m_vertexCount};
 
         m_device.createBuffer(bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
                               VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,

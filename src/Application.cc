@@ -1,6 +1,12 @@
 #include "Application.h"
 #include "FrameTime.h"
 
+// glm
+#define GLM_FORCE_RADIANS
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#include <glm/glm.hpp>
+#include <glm/gtc/constants.hpp>
+
 // std
 #include <array>
 #include <cstdio>
@@ -9,10 +15,17 @@
 
 namespace VE
 {
+    struct SimplePushConstantData
+    {
+        glm::mat2 transform{1.0F};
+        glm::vec2 offset;
+        alignas(16) glm::vec3 color;
+    };
+
     // Constructor
     Application::Application(void) : m_window{WIDTH, HEIGHT, "VulkanEngine"}, m_device{m_window}, m_pipelineLayout{}
     {
-        loadModels();
+        loadGameObjects();
         createPipelineLayout();
         recreateSwapChain();
         createCommandBuffers();
@@ -21,22 +34,45 @@ namespace VE
     // Destructor
     Application::~Application(void) { vkDestroyPipelineLayout(m_device.device(), m_pipelineLayout, nullptr); }
 
-    void Application::loadModels(void)
+    void Application::loadGameObjects(void)
     {
         std::vector<Model::Vertex> vertices{
-              {{0.0F, -0.5F}, {1.0, 0.0, 0.0}}, {{0.5F, 0.5F}, {0.0, 1.0, 0.0}}, {{-0.5F, 0.5F}, {0.0, 0.0, 1.0}}};
+              {{0.0F, -0.5F}, {1.0, 1.0, 1.0}}, {{0.5F, 0.5F}, {1.0, 1.0, 1.0}}, {{-0.5F, 0.5F}, {1.0, 1.0, 1.0}}};
 
-        m_model = std::make_unique<Model>(m_device, vertices);
+        auto model{std::make_shared<Model>(m_device, vertices)};
+
+        std::vector<glm::vec3> colors{
+              {1.F, .7F, .73F}, {1.F, .87F, .73F}, {1.F, 1.F, .73F}, {.73F, 1.F, .8F}, {.73, .88F, 1.F}};
+
+        for(auto& color : colors)
+        {
+            color = glm::pow(color, glm::vec3{2.2F});
+        }
+
+        for(std::uint32_t objectIndex{}; objectIndex < 40; ++objectIndex)
+        {
+            auto triangle{GameObject::createGameObject()};
+            triangle.model = model;
+            triangle.transform2d.scale = glm::vec2(.5F) + objectIndex * 0.025F;
+            triangle.transform2d.rotation = objectIndex * glm::pi<float>() * .025f;
+            triangle.objColor = colors[objectIndex % colors.size()];
+            m_gameObjects.push_back(std::move(triangle));
+        }
     }
 
     void Application::createPipelineLayout(void)
     {
+        VkPushConstantRange pushConstantRange{};
+        pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+        pushConstantRange.offset = 0;
+        pushConstantRange.size = sizeof(SimplePushConstantData);
+
         VkPipelineLayoutCreateInfo createInfo{};
         createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
         createInfo.setLayoutCount = 0;
         createInfo.pSetLayouts = nullptr;
-        createInfo.pushConstantRangeCount = 0;
-        createInfo.pPushConstantRanges = nullptr;
+        createInfo.pushConstantRangeCount = 1;
+        createInfo.pPushConstantRanges = &pushConstantRange;
 
         if(vkCreatePipelineLayout(m_device.device(), &createInfo, nullptr, &m_pipelineLayout) != VK_SUCCESS)
         {
@@ -114,6 +150,7 @@ namespace VE
     {
         vkFreeCommandBuffers(m_device.device(), m_device.getCommandPool(),
                              static_cast<std::uint32_t>(m_commandBuffers.size()), m_commandBuffers.data());
+        m_commandBuffers.clear();
     }
 
     void Application::recordCommandBuffer(std::uint32_t imageIndex)
@@ -155,16 +192,42 @@ namespace VE
         VkRect2D scissor{{0, 0}, m_swapChain->getSwapChainExtent()};
         vkCmdSetScissor(m_commandBuffers[imageIndex], 0, 1, &scissor);
 
-        m_pipeline->bind(m_commandBuffers[imageIndex]);
-
-        m_model->bind(m_commandBuffers[imageIndex]);
-        m_model->draw(m_commandBuffers[imageIndex]);
+        renderGameObjects(m_commandBuffers[imageIndex]);
 
         vkCmdEndRenderPass(m_commandBuffers[imageIndex]);
 
         if(vkEndCommandBuffer(m_commandBuffers[imageIndex]) != VK_SUCCESS)
         {
             throw std::runtime_error{"Failed to finish recording command buffer!"};
+        }
+    }
+
+    void Application::renderGameObjects(VkCommandBuffer commandBuffer)
+    {
+        m_pipeline->bind(commandBuffer);
+
+        // Update
+        for(std::uint32_t objIndex{}; auto& obj : m_gameObjects)
+        {
+            ++objIndex;
+            obj.transform2d.rotation =
+                  glm::mod<float>(obj.transform2d.rotation + 0.001f * objIndex, glm::two_pi<float>());
+        }
+
+        // Render
+        for(auto& obj : m_gameObjects)
+        {
+            SimplePushConstantData push{};
+            push.offset = obj.transform2d.translation;
+            push.color = obj.objColor;
+            push.transform = obj.transform2d.mat2();
+
+            vkCmdPushConstants(commandBuffer, m_pipelineLayout,
+                               VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_VERTEX_BIT, 0,
+                               sizeof(SimplePushConstantData), &push);
+
+            obj.model->bind(commandBuffer);
+            obj.model->draw(commandBuffer);
         }
     }
 

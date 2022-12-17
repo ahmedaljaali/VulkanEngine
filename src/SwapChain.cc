@@ -430,7 +430,7 @@ namespace VE
 
     VkPresentModeKHR SwapChain::chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes)
     {
-        for(const auto& availablePresentMode : availablePresentModes)
+        /* for(const auto& availablePresentMode : availablePresentModes)
         {
             if(availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR)
             {
@@ -443,7 +443,7 @@ namespace VE
                 std::cout << "Present mode: Immediate" << std::endl;
                 return availablePresentMode;
             }
-        }
+        } */
 
         std::cout << "Present mode: V-Sync" << std::endl;
         return VK_PRESENT_MODE_FIFO_KHR;

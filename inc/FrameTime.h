@@ -33,6 +33,6 @@ namespace VE
         ~FrameTime(void);
 
         void gameLoopStarted(void);
-        float getFrameTime(void);
+        [[nodiscard]] float getFrameTime(void) const;
     };
 }

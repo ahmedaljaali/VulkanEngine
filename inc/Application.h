@@ -3,8 +3,7 @@
 #include "Device.h"
 #include "GameObject.h"
 #include "Model.h"
-#include "Pipeline.h"
-#include "SwapChain.h"
+#include "Renderer.h"
 #include "Window.h"
 
 // vulkan headers
@@ -23,10 +22,7 @@ namespace VE
     private:  // Private variables
         Window m_window;
         Device m_device;
-        std::unique_ptr<SwapChain> m_swapChain;
-        std::unique_ptr<Pipeline> m_pipeline;
-        VkPipelineLayout m_pipelineLayout;
-        std::vector<VkCommandBuffer> m_commandBuffers;
+        Renderer m_renderer;
         std::vector<GameObject> m_gameObjects;
 
     public:  // Public variables
@@ -35,14 +31,6 @@ namespace VE
 
     private:  // Private methods
         void loadGameObjects(void);
-        void createPipelineLayout(void);
-        void createPipeline(void);
-        void createCommandBuffers(void);
-        void freeCommandBuffers(void);
-        void recordCommandBuffer(std::uint32_t imageIndex);
-        void drawFrame(void);
-        void recreateSwapChain(void);
-        void renderGameObjects(VkCommandBuffer commandBuffer);
 
     public:  // Public methods
         /*------------------------------------------------------------------*/

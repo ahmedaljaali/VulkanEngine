@@ -1,19 +1,18 @@
 #version 450
 
-// in variables
+// Out variables
 layout(location = 0) out vec4 outColor;
 
-// out variables
-layout(location = 0) in vec3 fragColor;
+// in variables
+layout(location = 0) in vec3 inFragColor;
 
 layout(push_constant) uniform Push
 {
-    mat2 transform;
-    vec2 offset;
+    mat4 transform;
     vec3 color;
 } push;
 
 void main(void)
 {
-    outColor = vec4(fragColor * push.color, 1.0F);
+    outColor = vec4(normalize(inFragColor), 1.0F);
 }

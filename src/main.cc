@@ -2,8 +2,8 @@
 
 // std
 #include <cstdlib>
-#include <iostream>
 #include <exception>
+#include <iostream>
 
 int main(void)
 {

@@ -6,6 +6,7 @@
 #include <set>
 #include <unordered_set>
 #include <vector>
+#include <stdexcept>
 
 namespace VE
 {
@@ -174,7 +175,9 @@ namespace VE
         std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
         std::set<std::uint32_t> uniqueQueueFamilies{indices.graphicsFamily.value(), indices.presentFamily.value()};
 
-        for(float queuePriority{}; std::uint32_t queueFamily : uniqueQueueFamilies)
+        // Don't think you are smart and put it outside
+        float queuePriority{};
+        for(std::uint32_t queueFamily : uniqueQueueFamilies)
         {
             VkDeviceQueueCreateInfo queueCreateInfo{};
             queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;

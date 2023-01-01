@@ -21,7 +21,7 @@ namespace VE
 
     void Window::init(void)
     {
-        glfwInit();
+         glfwInit();
 
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
         glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);

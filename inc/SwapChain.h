@@ -7,9 +7,9 @@
 
 // std
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
 
 namespace VE
 {
@@ -17,6 +17,8 @@ namespace VE
     {
     private:  // Private variables
         VkFormat m_swapChainImageFormat;
+        VkFormat m_swapChainDepthFormat;
+
         VkExtent2D m_swapChainExtent;
 
         std::vector<VkFramebuffer> m_swapChainFramebuffers;
@@ -100,5 +102,11 @@ namespace VE
 
         VkResult acquireNextImage(std::uint32_t* imageIndex);
         VkResult submitCommandBuffers(const VkCommandBuffer* commandBuffer, std::uint32_t* imageIndex);
+
+        [[nodiscard]] bool compareSwapChainFormats(const SwapChain& swap) const
+        {
+            return m_swapChainDepthFormat == swap.m_swapChainDepthFormat &&
+                  m_swapChainImageFormat == swap.m_swapChainImageFormat;
+        }
     };
 }

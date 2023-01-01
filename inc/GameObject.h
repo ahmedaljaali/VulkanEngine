@@ -2,29 +2,25 @@
 
 #include "Model.h"
 
+// glm
+#define GLM_FORCE_RADIANS
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#include <glm/gtc/matrix_transform.hpp>
+
 // std
 #include <cstdint>
 #include <memory>
 
 namespace VE
 {
-    struct Transform2dComponent
+    struct TransformComponent
     {
-        glm::vec2 translation{};  // position offset
-        glm::vec2 scale{1.0F, 1.0F};
-        float rotation{};
+        glm::vec3 translation{};  // position offset
+        glm::vec3 scale{1.0F};
+        glm::vec3 rotation{};
 
-        glm::mat2 mat2(void)
-        {
-            const float sin{glm::sin(rotation)};
-            const float cos{glm::cos(rotation)};
-
-            glm::mat2 rotationMat{{cos, sin}, {-sin, cos}};
-
-            glm::mat2 scaleMat{{scale.x, 0.0F}, {0.0F, scale.y}};
-
-            return rotationMat * scaleMat;
-        }
+        // Make a mat that scale then rotate around z,x,y and then translate
+        [[nodiscard]] glm::mat4 mat4(void) const;
     };
 
     class GameObject final
@@ -37,7 +33,7 @@ namespace VE
 
         std::shared_ptr<Model> model;
         glm::vec3 objColor;
-        Transform2dComponent transform2d;
+        TransformComponent transform;
 
     private:  // Private methods
         // Constructor
@@ -54,11 +50,8 @@ namespace VE
         GameObject(GameObject&& move) = default;
         GameObject& operator=(GameObject&& move) = default;
 
-        static GameObject createGameObject(void)
-        {
-            static id_t currentId{};
-            return {++currentId};
-        }
+        static GameObject createGameObject(void);
+        ~GameObject(void) = default;
 
         [[nodiscard]] id_t getId(void) const { return m_id; }
     };

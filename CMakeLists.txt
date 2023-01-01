@@ -119,7 +119,7 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
 
 target_include_directories(${PROJECT_NAME} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/inc
-    ${VULKAN_INCLUDE_DIRS}
+    ${Vulkan_INCLUDE_DIRS}
     ${CMAKE_CURRENT_SOURCE_DIR}/extern/glfw/include
     ${CMAKE_CURRENT_SOURCE_DIR}/extern/glm/include
     ${CMAKE_CURRENT_SOURCE_DIR}/extern/tinyObjLoader/include
@@ -155,7 +155,12 @@ endif()
 #                               Debug                                #
 
 SET(CMAKE_BUILD_TYPE debug)
-SET(CMAKE_CXX_FLAGS_DEBUG "-gfull -ggdb3 -O0 -Weverything -Wno-c++98-compat -Wno-c++98-compat-pedantic -Wno-padded -Wno-documentation -Wno-documentation-unknown-command")
+
+# For memory
+# SET(CMAKE_CXX_FLAGS_DEBUG "-gfull -ggdb3 -O0 -Weverything -Wno-c++98-compat -Wno-c++98-compat-pedantic -Wno-padded -Wno-documentation -Wno-documentation-unknown-command -fsanitize=memory -fno-omit-frame-pointer -fno-optimize-sibling-calls -fsanitize-memory-track-origins=2")
+
+# For address
+SET(CMAKE_CXX_FLAGS_DEBUG "-gfull -ggdb3 -O0 -Weverything -Wno-c++98-compat -Wno-c++98-compat-pedantic -Wno-padded -Wno-documentation -Wno-documentation-unknown-command -fsanitize=address -fno-omit-frame-pointer -fno-optimize-sibling-calls")
 #-Werror Treat warnings as errors
 #--------------------------------------------------------------------#
 

@@ -18,5 +18,5 @@ namespace VE
         m_startTime = m_gameLoopStartingTime;
     }
 
-    float FrameTime::getFrameTime(void) { return m_frameTime; }
+    [[nodiscard]] float FrameTime::getFrameTime(void) const { return m_frameTime; }
 }

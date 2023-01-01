@@ -48,5 +48,6 @@ namespace VE
         VkExtent2D getExtent(void);
         [[nodiscard]] bool wasWindowResized(void) const;
         void resetWindowResizedFlag(void);
+        GLFWwindow* getGLFWwindow(void) { return m_window; }
     };
 }

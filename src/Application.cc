@@ -1,5 +1,8 @@
 #include "Application.h"
 #include "FrameTime.h"
+#include "SimpleRenderSystem.h"
+#include "Camera.h"
+#include "KeyboardMovementController.h"
 
 // glm
 #define GLM_FORCE_RADIANS
@@ -15,265 +18,117 @@
 
 namespace VE
 {
-    struct SimplePushConstantData
-    {
-        glm::mat2 transform{1.0F};
-        glm::vec2 offset;
-        alignas(16) glm::vec3 color;
-    };
-
     // Constructor
-    Application::Application(void) : m_window{WIDTH, HEIGHT, "VulkanEngine"}, m_device{m_window}, m_pipelineLayout{}
+    Application::Application(void)
+        : m_window{WIDTH, HEIGHT, "VulkanEngine"}, m_device{m_window}, m_renderer{m_window, m_device}
     {
         loadGameObjects();
-        createPipelineLayout();
-        recreateSwapChain();
-        createCommandBuffers();
     }
 
     // Destructor
-    Application::~Application(void) { vkDestroyPipelineLayout(m_device.device(), m_pipelineLayout, nullptr); }
+    Application::~Application(void) = default;
+
+    // temporary helper function, creates a 1x1x1 cube centered at offset
+    static std::unique_ptr<Model> createCubeModel(Device& device, glm::vec3 offset)
+    {
+        std::vector<Model::Vertex> vertices{
+
+              // left face (white)
+              {{-.5F, -.5F, -.5F}, {.9F, .9F, .9F}},
+              {{-.5F, .5F, .5F}, {.9F, .9F, .9F}},
+              {{-.5F, -.5F, .5F}, {.9F, .9F, .9F}},
+              {{-.5F, -.5F, -.5F}, {.9F, .9F, .9F}},
+              {{-.5F, .5F, -.5F}, {.9F, .9F, .9F}},
+              {{-.5F, .5F, .5F}, {.9F, .9F, .9F}},
+
+              // right Face (yellow)
+              {{.5F, -.5F, -.5F}, {.8F, .8F, .1F}},
+              {{.5F, .5F, .5F}, {.8F, .8F, .1F}},
+              {{.5F, -.5F, .5F}, {.8F, .8F, .1F}},
+              {{.5F, -.5F, -.5F}, {.8F, .8F, .1F}},
+              {{.5F, .5F, -.5F}, {.8F, .8F, .1F}},
+              {{.5F, .5F, .5F}, {.8F, .8F, .1F}},
+
+              // top Face (orange, remember y axis points down)
+              {{-.5F, -.5F, -.5F}, {.9F, .6F, .1F}},
+              {{.5F, -.5F, .5F}, {.9F, .6F, .1F}},
+              {{-.5F, -.5F, .5F}, {.9F, .6F, .1F}},
+              {{-.5F, -.5F, -.5F}, {.9F, .6F, .1F}},
+              {{.5F, -.5F, -.5F}, {.9F, .6F, .1F}},
+              {{.5F, -.5F, .5F}, {.9F, .6F, .1F}},
+
+              // bottom Face (red)
+              {{-.5F, .5F, -.5F}, {.8F, .1F, .1F}},
+              {{.5F, .5F, .5F}, {.8F, .1F, .1F}},
+              {{-.5F, .5F, .5F}, {.8F, .1F, .1F}},
+              {{-.5F, .5F, -.5F}, {.8F, .1F, .1F}},
+              {{.5F, .5F, -.5F}, {.8F, .1F, .1F}},
+              {{.5F, .5F, .5F}, {.8F, .1F, .1F}},
+
+              // nose Face (blue)
+              {{-.5F, -.5F, 0.5F}, {.1F, .1F, .8F}},
+              {{.5F, .5F, 0.5F}, {.1F, .1F, .8F}},
+              {{-.5F, .5F, 0.5F}, {.1F, .1F, .8F}},
+              {{-.5F, -.5F, 0.5F}, {.1F, .1F, .8F}},
+              {{.5F, -.5F, 0.5F}, {.1F, .1F, .8F}},
+              {{.5F, .5F, 0.5F}, {.1F, .1F, .8F}},
+
+              // tail Face (green)
+              {{-.5F, -.5F, -0.5F}, {.1F, .8F, .1F}},
+              {{.5F, .5F, -0.5F}, {.1F, .8F, .1F}},
+              {{-.5F, .5F, -0.5F}, {.1F, .8F, .1F}},
+              {{-.5F, -.5F, -0.5F}, {.1F, .8F, .1F}},
+              {{.5F, -.5F, -0.5F}, {.1F, .8F, .1F}},
+              {{.5F, .5F, -0.5F}, {.1F, .8F, .1F}},
+
+        };
+        for(auto& vertex : vertices)
+        {
+            vertex.position += offset;
+        }
+        return std::make_unique<Model>(device, vertices);
+    }
 
     void Application::loadGameObjects(void)
     {
-        std::vector<Model::Vertex> vertices{
-              {{0.0F, -0.5F}, {1.0, 1.0, 1.0}}, {{0.5F, 0.5F}, {1.0, 1.0, 1.0}}, {{-0.5F, 0.5F}, {1.0, 1.0, 1.0}}};
+        std::shared_ptr<Model> model{createCubeModel(m_device, glm::vec3{0.0F})};
 
-        auto model{std::make_shared<Model>(m_device, vertices)};
+        auto cube{GameObject::createGameObject()};
+        cube.model = model;
+        cube.transform.translation = {0.0F, 0.0F, 2.5F};
+        cube.transform.scale = {0.5F, 0.5F, 0.5F};
 
-        std::vector<glm::vec3> colors{
-              {1.F, .7F, .73F}, {1.F, .87F, .73F}, {1.F, 1.F, .73F}, {.73F, 1.F, .8F}, {.73, .88F, 1.F}};
-
-        for(auto& color : colors)
-        {
-            color = glm::pow(color, glm::vec3{2.2F});
-        }
-
-        for(std::uint32_t objectIndex{}; objectIndex < 40; ++objectIndex)
-        {
-            auto triangle{GameObject::createGameObject()};
-            triangle.model = model;
-            triangle.transform2d.scale = glm::vec2(.5F) + objectIndex * 0.025F;
-            triangle.transform2d.rotation = objectIndex * glm::pi<float>() * .025f;
-            triangle.objColor = colors[objectIndex % colors.size()];
-            m_gameObjects.push_back(std::move(triangle));
-        }
-    }
-
-    void Application::createPipelineLayout(void)
-    {
-        VkPushConstantRange pushConstantRange{};
-        pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
-        pushConstantRange.offset = 0;
-        pushConstantRange.size = sizeof(SimplePushConstantData);
-
-        VkPipelineLayoutCreateInfo createInfo{};
-        createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-        createInfo.setLayoutCount = 0;
-        createInfo.pSetLayouts = nullptr;
-        createInfo.pushConstantRangeCount = 1;
-        createInfo.pPushConstantRanges = &pushConstantRange;
-
-        if(vkCreatePipelineLayout(m_device.device(), &createInfo, nullptr, &m_pipelineLayout) != VK_SUCCESS)
-        {
-            throw std::runtime_error{"Failed to create pipeline layout!"};
-        }
-    }
-
-    void Application::recreateSwapChain(void)
-    {
-        auto extent{m_window.getExtent()};
-
-        while(extent.width == 0 || extent.height == 0)
-        {
-            extent = m_window.getExtent();
-            glfwWaitEvents();
-        }
-        vkDeviceWaitIdle(m_device.device());
-
-        if(m_swapChain == nullptr)
-        {
-            m_swapChain = std::make_unique<SwapChain>(m_device, m_window.getExtent());
-        }
-        else
-        {
-            m_swapChain = std::make_unique<SwapChain>(m_device, m_window.getExtent(), std::move(m_swapChain));
-            if(m_swapChain->imageCount() != m_commandBuffers.size())
-            {
-                freeCommandBuffers();
-                createCommandBuffers();
-            }
-        }
-        createPipeline();
-    }
-
-    void Application::createPipeline(void)
-    {
-        if(m_swapChain == nullptr)
-        {
-            throw std::runtime_error{"Can't create pipeline before swap chain!"};
-        }
-
-        if(m_pipelineLayout == nullptr)
-        {
-            throw std::runtime_error{"Can't create pipeline before pipeline layout!"};
-        }
-
-        PipelineConfigInfo pipelineConfig{};
-        Pipeline::defaultPipelineConfig(pipelineConfig);
-
-        pipelineConfig.renderPass = m_swapChain->getRenderPass();
-        pipelineConfig.pipelineLayout = m_pipelineLayout;
-
-        m_pipeline = std::make_unique<Pipeline>(m_device, "shaders/simple.vert.spv", "shaders/simple.frag.spv",
-                                                pipelineConfig);
-    }
-
-    void Application::createCommandBuffers(void)
-    {
-        m_commandBuffers.resize(m_swapChain->imageCount());
-
-        // Allocate command buffers
-        VkCommandBufferAllocateInfo allocInfo{};
-        allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-        allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-        allocInfo.commandPool = m_device.getCommandPool();
-        allocInfo.commandBufferCount = static_cast<std::uint32_t>(m_commandBuffers.size());
-
-        if(vkAllocateCommandBuffers(m_device.device(), &allocInfo, m_commandBuffers.data()) != VK_SUCCESS)
-        {
-            throw std::runtime_error{"Failed to allocate command buffers!"};
-        }
-    }
-
-    void Application::freeCommandBuffers(void)
-    {
-        vkFreeCommandBuffers(m_device.device(), m_device.getCommandPool(),
-                             static_cast<std::uint32_t>(m_commandBuffers.size()), m_commandBuffers.data());
-        m_commandBuffers.clear();
-    }
-
-    void Application::recordCommandBuffer(std::uint32_t imageIndex)
-    {
-        VkCommandBufferBeginInfo beginInfo{};
-        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-
-        if(vkBeginCommandBuffer(m_commandBuffers[imageIndex], &beginInfo) != VK_SUCCESS)
-        {
-            throw std::runtime_error{"Failed to begin recording command buffer!"};
-        }
-
-        VkRenderPassBeginInfo renderPassInfo{};
-        renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        renderPassInfo.renderPass = m_swapChain->getRenderPass();
-        renderPassInfo.framebuffer = m_swapChain->getFrameBuffer(imageIndex);
-
-        renderPassInfo.renderArea.offset = {0, 0};
-        renderPassInfo.renderArea.extent = m_swapChain->getSwapChainExtent();
-
-        std::array<VkClearValue, 2> clearValues{};
-        clearValues[0].color = {{0.0F, 0.0F, 0.0F, 1.0F}};
-        clearValues[1].depthStencil = {1.0F, 0};
-
-        renderPassInfo.clearValueCount = static_cast<std::uint32_t>(clearValues.size());
-        renderPassInfo.pClearValues = clearValues.data();
-
-        vkCmdBeginRenderPass(m_commandBuffers[imageIndex], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-        VkViewport viewport{};
-        viewport.x = 0.0F;
-        viewport.y = 0.0F;
-        viewport.width = static_cast<float>(m_swapChain->getSwapChainExtent().width);
-        viewport.height = static_cast<float>(m_swapChain->getSwapChainExtent().height);
-        viewport.minDepth = 0.0F;
-        viewport.maxDepth = 1.0F;
-        vkCmdSetViewport(m_commandBuffers[imageIndex], 0, 1, &viewport);
-
-        VkRect2D scissor{{0, 0}, m_swapChain->getSwapChainExtent()};
-        vkCmdSetScissor(m_commandBuffers[imageIndex], 0, 1, &scissor);
-
-        renderGameObjects(m_commandBuffers[imageIndex]);
-
-        vkCmdEndRenderPass(m_commandBuffers[imageIndex]);
-
-        if(vkEndCommandBuffer(m_commandBuffers[imageIndex]) != VK_SUCCESS)
-        {
-            throw std::runtime_error{"Failed to finish recording command buffer!"};
-        }
-    }
-
-    void Application::renderGameObjects(VkCommandBuffer commandBuffer)
-    {
-        m_pipeline->bind(commandBuffer);
-
-        // Update
-        for(std::uint32_t objIndex{}; auto& obj : m_gameObjects)
-        {
-            ++objIndex;
-            obj.transform2d.rotation =
-                  glm::mod<float>(obj.transform2d.rotation + 0.001f * objIndex, glm::two_pi<float>());
-        }
-
-        // Render
-        for(auto& obj : m_gameObjects)
-        {
-            SimplePushConstantData push{};
-            push.offset = obj.transform2d.translation;
-            push.color = obj.objColor;
-            push.transform = obj.transform2d.mat2();
-
-            vkCmdPushConstants(commandBuffer, m_pipelineLayout,
-                               VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_VERTEX_BIT, 0,
-                               sizeof(SimplePushConstantData), &push);
-
-            obj.model->bind(commandBuffer);
-            obj.model->draw(commandBuffer);
-        }
-    }
-
-    void Application::drawFrame(void)
-    {
-        std::uint32_t imageIndex{};
-        auto result{m_swapChain->acquireNextImage(&imageIndex)};
-
-        if(result == VK_ERROR_OUT_OF_DATE_KHR)
-        {
-            recreateSwapChain();
-            return;
-        }
-
-        if(result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
-        {
-            throw std::runtime_error{"Failed to acquire swap chain image!"};
-        }
-
-        recordCommandBuffer(imageIndex);
-
-        result = m_swapChain->submitCommandBuffers(&m_commandBuffers[imageIndex], &imageIndex);
-
-        if(result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || m_window.wasWindowResized())
-        {
-            m_window.resetWindowResizedFlag();
-            recreateSwapChain();
-            return;
-        }
-
-        if(result != VK_SUCCESS)
-        {
-            throw std::runtime_error{"Failed to present swap chain image!"};
-        }
+        m_gameObjects.push_back(std::move(cube));
     }
 
     void Application::run(void)
     {
-        FrameTime frameTime;
+        FrameTime frameTime{};
+        SimpleRenderSystem simpleRenderSystem{m_device, m_renderer.getSwapChainRenderPass()};
+        Camera camera{};
+        KeyboardMovementController cameraController{};
+
+        auto cameraCurrentStat{GameObject::createGameObject()};
 
         while(!m_window.shouldClose())
         {
             m_window.pollEvents();
             frameTime.gameLoopStarted();
 
-            drawFrame();
+            cameraController.moveInPlaneXZ(m_window.getGLFWwindow(), frameTime.getFrameTime(), cameraCurrentStat);
+            camera.setViewYXZ(cameraCurrentStat.transform.translation, cameraCurrentStat.transform.rotation);
+
+            camera.setPerspectiveProjection(glm::radians(50.0F), m_renderer.getSwapChainAspectRatio(), 0.1F, 100.0F);
+
+            if(VkCommandBuffer commandBuffer{m_renderer.beginFrame()})
+            {
+                m_renderer.beginSwapChainRenderPass(commandBuffer);
+
+                simpleRenderSystem.renderGameObjects(commandBuffer, m_gameObjects, camera);
+
+                m_renderer.endSwapChainRenderPass(commandBuffer);
+                m_renderer.endFrame();
+            }
 
             performance(frameTime.getFrameTime());
         }
